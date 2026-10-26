@@ -29,6 +29,13 @@
 	<properties>
 		<java.version>25</java.version>
 	</properties>
+	<repositories>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -39,6 +46,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.Auties00.Cobalt</groupId>
+			<artifactId>cobalt-lib</artifactId>
+			<version>cb9fbf172507626948fbc3611d0a6fb00bb3a0f1</version>
 		</dependency>
 	</dependencies>
 
