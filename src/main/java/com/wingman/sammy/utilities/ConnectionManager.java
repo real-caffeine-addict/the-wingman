@@ -3,7 +3,7 @@ package com.wingman.sammy.utilities;
 import com.github.auties00.cobalt.client.WhatsAppClient;
 import com.github.auties00.cobalt.client.linked.LinkedWhatsAppClient;
 import com.github.auties00.cobalt.client.linked.LinkedWhatsAppClientVerificationHandler.Web.QrCode;
-import com.wingman.sammy.bots.SimpleBot;
+import com.wingman.sammy.bots.ShoppingBot;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -13,10 +13,10 @@ import java.io.IOException;
 @Component
 public class ConnectionManager {
     private LinkedWhatsAppClient client;
-    private final SimpleBot simpleBot;
+    private final ShoppingBot shoppingBot;
 
-    public ConnectionManager (SimpleBot simpleBot) {
-        this.simpleBot = simpleBot;
+    public ConnectionManager (ShoppingBot shoppingBot) {
+    this.shoppingBot = shoppingBot;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -29,7 +29,7 @@ public class ConnectionManager {
         client = options.unregistered(QrCode.toTerminal());
 
         client.addLoggedInListener(api -> System.out.println("Sammy connected"));
-        client.addNewMessageListener(simpleBot::onMessage);
+        client.addNewMessageListener(shoppingBot::onAddItem);
         client.connect();
 
         client.addDisconnectedListener((api, reason) ->
