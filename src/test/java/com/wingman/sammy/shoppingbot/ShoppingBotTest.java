@@ -1,10 +1,9 @@
-package com.wingman.sammy.bots;
+package com.wingman.sammy.shoppingbot;
 
 import com.github.auties00.cobalt.client.linked.LinkedWhatsAppClient;
 import com.github.auties00.cobalt.store.linked.LinkedWhatsAppAccountStore;
 import com.github.auties00.cobalt.store.linked.LinkedWhatsAppStore;
 import com.github.auties00.cobalt.wire.core.jid.Jid;
-import com.github.auties00.cobalt.wire.core.message.MessageKey;
 import com.github.auties00.cobalt.wire.core.message.MessageKeyBuilder;
 import com.github.auties00.cobalt.wire.linked.chat.ChatMessageInfo;
 import com.github.auties00.cobalt.wire.linked.chat.ChatMessageInfoBuilder;
@@ -12,7 +11,6 @@ import com.github.auties00.cobalt.wire.linked.message.LinkedMessageContainer;
 import com.github.auties00.cobalt.wire.linked.message.context.ContextInfoBuilder;
 import com.github.auties00.cobalt.wire.linked.message.text.ExtendedTextMessage;
 import com.github.auties00.cobalt.wire.linked.message.text.ExtendedTextMessageBuilder;
-import com.wingman.sammy.utilities.Persistence;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -24,7 +22,7 @@ public class ShoppingBotTest {
     @Test
     public void writeShoppingListHappyPath () {
         String msg = "Lettuce\nעגבניה \n $Gד \n   Lettuce";
-        Persistence repo = Mockito.mock(Persistence.class);
+        ShoppingBotRepository repo = Mockito.mock(ShoppingBotRepository.class);
         LinkedWhatsAppClient client = Mockito.mock(LinkedWhatsAppClient.class);
         ShoppingBot bot = new ShoppingBot(repo);
         var key = new MessageKeyBuilder()
@@ -36,7 +34,7 @@ public class ShoppingBotTest {
                 .message(LinkedMessageContainer.of(msg))
                 .build();
         bot.onAddItem(client, info);
-        Mockito.verify(repo).writeShoppingList(
+        Mockito.verify(repo).addItems(
                 Set.of("Lettuce", "עגבניה", "$Gד")
         );
     }
@@ -54,11 +52,11 @@ public class ShoppingBotTest {
                 .build();
 
         LinkedWhatsAppClient client = Mockito.mock(LinkedWhatsAppClient.class);
-        Persistence repo = Mockito.mock(Persistence.class);
+        ShoppingBotRepository repo = Mockito.mock(ShoppingBotRepository.class);
         var store = Mockito.mock(LinkedWhatsAppStore.class);
         var account = Mockito.mock(LinkedWhatsAppAccountStore.class);
         Mockito.when(repo.readShoppingList())
-                .thenReturn("test-list");
+                .thenReturn(List.of("test-list"));
         Mockito.when(client.store()).thenReturn(store);
         Mockito.when(store.accountStore()).thenReturn(account);
         Mockito.when(account.jid()).thenReturn(Optional.of(sammyJid));
@@ -85,12 +83,12 @@ public class ShoppingBotTest {
         );
         Mockito.verify(repo).readShoppingList();
         Mockito.verify(repo, Mockito.never())
-                .writeShoppingList(Mockito.anySet());
+                .addItems(Mockito.anySet());
     }
 
     @Test
     void ignoresOwnMessages() {
-        var repo = Mockito.mock(Persistence.class);
+        var repo = Mockito.mock(ShoppingBotRepository.class);
         var client = Mockito.mock(LinkedWhatsAppClient.class);
         var bot = new ShoppingBot(repo);
 
@@ -111,7 +109,7 @@ public class ShoppingBotTest {
 
     @Test
     void ignoresMessagesFromOtherChats() {
-        var repo = Mockito.mock(Persistence.class);
+        var repo = Mockito.mock(ShoppingBotRepository.class);
         var client = Mockito.mock(LinkedWhatsAppClient.class);
         var bot = new ShoppingBot(repo);
 
