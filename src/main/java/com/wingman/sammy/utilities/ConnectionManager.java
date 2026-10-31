@@ -3,7 +3,7 @@ package com.wingman.sammy.utilities;
 import com.github.auties00.cobalt.client.WhatsAppClient;
 import com.github.auties00.cobalt.client.linked.LinkedWhatsAppClient;
 import com.github.auties00.cobalt.client.linked.LinkedWhatsAppClientVerificationHandler.Web.QrCode;
-import com.wingman.sammy.bots.ShoppingBot;
+import com.wingman.sammy.shoppingbot.ShoppingBot;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;

@@ -3,3 +3,7 @@ spring:
     name: sammy
   main:
     keep-alive: true
+  datasource:
+    url: "jdbc:h2:file:./data/sammy;WRITE_DELAY=0"
+    username: ${SAMMY_DB_USER}
+    password: ${SAMMY_DB_PASSWORD}
