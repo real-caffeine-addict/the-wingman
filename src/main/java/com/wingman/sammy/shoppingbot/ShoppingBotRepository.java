@@ -1,5 +1,6 @@
 package com.wingman.sammy.shoppingbot;
 
+import com.wingman.sammy.shoppingbot.domain.ItemStatus;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -28,5 +29,22 @@ public class ShoppingBotRepository {
     public List<String> readShoppingList () {
         String sql = "SELECT description from shopping_items WHERE status = 'PENDING'";
         return jdbc.queryForList(sql, String.class);
+    }
+
+    public void setStatus(ItemStatus itemStatus, String id) {
+        jdbc.update("""
+                UPDATE shopping_items
+                SET status = ?
+                WHERE message_id = ?
+                """, itemStatus.name(), id);
+    }
+
+    public void attachMessageId(String id, String item) {
+        jdbc.update("""
+                UPDATE shopping_items
+                SET status = 'IN_PROGRESS', message_id = ?
+                WHERE description = ?
+                AND status = 'PENDING'
+                """, id, item);
     }
 }

@@ -29,7 +29,7 @@ public class ConnectionManager {
         client = options.unregistered(QrCode.toTerminal());
 
         client.addLoggedInListener(api -> System.out.println("Sammy connected"));
-        client.addNewMessageListener(shoppingBot::onAddItem);
+        client.addNewMessageListener(shoppingBot::onShoppingBotMessage);
         client.connect();
 
         client.addDisconnectedListener((api, reason) ->

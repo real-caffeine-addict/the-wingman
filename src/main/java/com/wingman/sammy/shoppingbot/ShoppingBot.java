@@ -6,6 +6,8 @@ import com.github.auties00.cobalt.wire.core.message.MessageInfo;
 import com.github.auties00.cobalt.wire.linked.chat.ChatMessageInfo;
 import com.github.auties00.cobalt.wire.linked.message.LinkedMessageContainer;
 import com.github.auties00.cobalt.wire.linked.message.text.ExtendedTextMessage;
+import com.github.auties00.cobalt.wire.linked.message.text.ReactionMessage;
+import com.wingman.sammy.shoppingbot.domain.ItemStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,17 +20,20 @@ public class ShoppingBot {
     private final ShoppingBotRepository persistence;
 
     public ShoppingBot (ShoppingBotRepository persistence) { this.persistence = persistence; }
-    public void onAddItem (LinkedWhatsAppClient client, MessageInfo info){
+    public void onShoppingBotMessage(LinkedWhatsAppClient client, MessageInfo info){
+        // Global validations
         if (info.key().fromMe()) { return; }
         if (!(info instanceof ChatMessageInfo message)) { return; }
-        if (!(info.message().content() instanceof ExtendedTextMessage text)) { return; }
         var chat = message.key().parentJid().orElse(null);
         if (!GROUP.equals(chat)){
             if (chat == null) {
-                System.out.println("Missing parentJid. Ignoring message " + text);
+                System.out.println("Missing parentJid. Ignoring message " + message.message().content().toString());
             }
             return;
         }
+
+        if (info.message().content() instanceof ReactionMessage reaction) { handleReaction(reaction); }
+        if (!(info.message().content() instanceof ExtendedTextMessage text)) { return; }
         if (mentionsSammy(client, text)){
             sendPending(client, chat);
         } else {
@@ -36,6 +41,25 @@ public class ShoppingBot {
         }
 
     }
+
+    private void handleReaction(ReactionMessage reaction) {
+        var target = reaction.key().orElse(null);
+        var emoji = reaction.text().orElse(null);
+        if (target == null || emoji == null) {
+            return;
+        }
+        var messageId = target.id().orElse(null);
+        if (messageId == null) {
+            return;
+        }
+
+        if (emoji.startsWith("\uD83D\uDC4D")) {
+            persistence.setStatus(ItemStatus.PURCHASED, messageId);
+        } else {
+            persistence.setStatus(ItemStatus.IN_PROGRESS, messageId);
+        }
+    }
+
     private boolean mentionsSammy(
             LinkedWhatsAppClient client,
             ExtendedTextMessage text
@@ -67,7 +91,11 @@ public class ShoppingBot {
             return;
         }
         for (String item : rawList) {
-            client.sendMessage(chat, LinkedMessageContainer.of(item));
+            var id = client.sendMessage(chat, LinkedMessageContainer.of(item)).id().orElse(null);
+            if (id == null)
+                throw new RuntimeException("Sent message with no id " + item);
+            persistence.attachMessageId(id, item);
         }
     }
+
 }

@@ -1,7 +1,7 @@
 package com.wingman.sammy.shoppingbot;
 
+import com.wingman.sammy.shoppingbot.domain.ItemStatus;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.test.autoconfigure.JdbcTest;
 import org.springframework.context.annotation.Import;
@@ -14,9 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @JdbcTest
 @Import(ShoppingBotRepository.class)
@@ -65,5 +63,61 @@ public class ShoppingBotRepositoryTest {
 
         List<String> reading = repo.readShoppingList();
         assertTrue(reading.isEmpty());
+    }
+
+    @Test
+    public void attachMessageId () {
+        repo.addItems(Set.of("eggs", "milk"));
+        jdbcTemplate.update("INSERT INTO shopping_items (description, status) values ('milk','PURCHASED')");
+
+        repo.attachMessageId("test-id", "milk");
+        List<String> milkId = jdbcTemplate.queryForList(
+                "SELECT message_id FROM shopping_items WHERE description = 'milk'",
+                String.class
+        );
+        String milkPurchasedId = jdbcTemplate.queryForObject(
+                "SELECT message_id FROM shopping_items WHERE description = 'milk' AND status = 'PURCHASED'",
+                String.class
+        );
+        String milkInProgressId = jdbcTemplate.queryForObject(
+                "SELECT message_id FROM shopping_items WHERE description = 'milk' AND status = 'IN_PROGRESS'",
+                String.class
+        );
+        Integer inProgressCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM shopping_items WHERE status = 'IN_PROGRESS'"
+                ,int.class
+        );
+        Integer purchasedCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM shopping_items WHERE status = 'PURCHASED'",
+                int.class
+        );
+        Integer hasIdCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM shopping_items WHERE message_id <> ''",
+                int.class
+        );
+        assertEquals(2, milkId.size());
+        assertTrue(milkId.contains(null) && milkId.contains("test-id"));
+        assertEquals("test-id", milkInProgressId);
+        assertNull(milkPurchasedId);
+        assertEquals(1, inProgressCount);
+        assertEquals(1, hasIdCount);
+        assertEquals(1, purchasedCount);
+    }
+
+    @Test
+    public void  dBVerification () {
+        repo.addItems(Set.of("beef", "rice"));
+        repo.attachMessageId("beef-id", "beef");
+        repo.attachMessageId("rice-id", "rice");
+
+        repo.setStatus(ItemStatus.PURCHASED, "beef-id");
+        String beefStatus = jdbcTemplate.queryForObject("SELECT status FROM shopping_items WHERE message_id = 'beef-id'", String.class);
+        String riceStatus = jdbcTemplate.queryForObject("SELECT status FROM shopping_items WHERE message_id = 'rice-id'", String.class);
+        assertEquals("PURCHASED", beefStatus);
+        assertEquals("IN_PROGRESS", riceStatus);
+
+        repo.setStatus(ItemStatus.IN_PROGRESS, "beef-id");
+        beefStatus = jdbcTemplate.queryForObject("SELECT status FROM shopping_items WHERE message_id = 'beef-id'", String.class);
+        assertEquals("IN_PROGRESS", beefStatus);
     }
 }
