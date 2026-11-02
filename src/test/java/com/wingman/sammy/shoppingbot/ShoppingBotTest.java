@@ -11,6 +11,8 @@ import com.github.auties00.cobalt.wire.linked.message.LinkedMessageContainer;
 import com.github.auties00.cobalt.wire.linked.message.context.ContextInfoBuilder;
 import com.github.auties00.cobalt.wire.linked.message.text.ExtendedTextMessage;
 import com.github.auties00.cobalt.wire.linked.message.text.ExtendedTextMessageBuilder;
+import com.github.auties00.cobalt.wire.linked.message.text.ReactionMessageBuilder;
+import com.wingman.sammy.shoppingbot.domain.ItemStatus;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -19,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public class ShoppingBotTest {
+
     @Test
     public void writeShoppingListHappyPath () {
         String msg = "Lettuce\nעגבניה \n $Gד \n   Lettuce";
@@ -33,7 +36,7 @@ public class ShoppingBotTest {
                 .key(key)
                 .message(LinkedMessageContainer.of(msg))
                 .build();
-        bot.onAddItem(client, info);
+        bot.onShoppingBotMessage(client, info);
         Mockito.verify(repo).addItems(
                 Set.of("Lettuce", "עגבניה", "$Gד")
         );
@@ -51,12 +54,25 @@ public class ShoppingBotTest {
                 .contextInfo(context)
                 .build();
 
+        var key = new MessageKeyBuilder()
+                .parentJid(Jid.of("120363415109588611@g.us"))
+                .fromMe(false)
+                .build();
+
+        var sentKey = new MessageKeyBuilder()
+                .id("message-id-test")
+                .build();
+
         LinkedWhatsAppClient client = Mockito.mock(LinkedWhatsAppClient.class);
         ShoppingBotRepository repo = Mockito.mock(ShoppingBotRepository.class);
         var store = Mockito.mock(LinkedWhatsAppStore.class);
         var account = Mockito.mock(LinkedWhatsAppAccountStore.class);
         Mockito.when(repo.readShoppingList())
                 .thenReturn(List.of("test-list"));
+        Mockito.when(client.sendMessage(
+                Mockito.any(Jid.class),
+                Mockito.any(LinkedMessageContainer.class)
+        )).thenReturn(sentKey);
         Mockito.when(client.store()).thenReturn(store);
         Mockito.when(store.accountStore()).thenReturn(account);
         Mockito.when(account.jid()).thenReturn(Optional.of(sammyJid));
@@ -64,15 +80,11 @@ public class ShoppingBotTest {
 
         ShoppingBot bot = new ShoppingBot(repo);
 
-        var key = new MessageKeyBuilder()
-                .parentJid(Jid.of("120363415109588611@g.us"))
-                .fromMe(false)
-                .build();
         ChatMessageInfo info = new ChatMessageInfoBuilder()
                 .key(key)
                 .message(LinkedMessageContainer.of(text))
                 .build();
-        bot.onAddItem(client, info);
+        bot.onShoppingBotMessage(client, info);
 
         Mockito.verify(client).sendMessage(
                 Mockito.eq(Jid.of("120363415109588611@g.us")),
@@ -84,6 +96,8 @@ public class ShoppingBotTest {
         Mockito.verify(repo).readShoppingList();
         Mockito.verify(repo, Mockito.never())
                 .addItems(Mockito.anySet());
+        Mockito.verify(repo)
+                .attachMessageId("message-id-test", "test-list");
     }
 
     @Test
@@ -102,7 +116,7 @@ public class ShoppingBotTest {
                 .message(LinkedMessageContainer.of("חלב\nביצים"))
                 .build();
 
-        bot.onAddItem(client, info);
+        bot.onShoppingBotMessage(client, info);
 
         Mockito.verifyNoInteractions(repo, client);
     }
@@ -123,9 +137,91 @@ public class ShoppingBotTest {
                 .message(LinkedMessageContainer.of("חלב\nביצים"))
                 .build();
 
-        bot.onAddItem(client, info);
+        bot.onShoppingBotMessage(client, info);
 
         Mockito.verifyNoInteractions(repo, client);
     }
-    
+
+    @Test
+    public void emojiLightThumbPurchase () {
+        ShoppingBotRepository repo = Mockito.mock(ShoppingBotRepository.class);
+        LinkedWhatsAppClient client = Mockito.mock(LinkedWhatsAppClient.class);
+
+        var key = new MessageKeyBuilder()
+                .id("test-message-key").build();
+
+        var reactionKey = new MessageKeyBuilder()
+                .parentJid(Jid.of("120363415109588611@g.us")).fromMe(false)
+                .build();
+
+        var reaction = new ReactionMessageBuilder()
+                .key(key).text("👍🏻").build();
+        var info = new ChatMessageInfoBuilder()
+                .key(reactionKey)
+                .message(LinkedMessageContainer.of(reaction))
+                .build();
+        var bot = new ShoppingBot(repo);
+
+        bot.onShoppingBotMessage(client, info);
+
+        Mockito.verify(repo).setStatus(ItemStatus.PURCHASED, "test-message-key");
+    }
+
+    @Test
+    public void emojiDarkThumbPurchase () {
+        ShoppingBotRepository repo = Mockito.mock(ShoppingBotRepository.class);
+        LinkedWhatsAppClient client = Mockito.mock(LinkedWhatsAppClient.class);
+
+        var key = new MessageKeyBuilder()
+                .id("test-message-key").build();
+
+        var reactionKey = new MessageKeyBuilder()
+                .parentJid(Jid.of("120363415109588611@g.us")).fromMe(false)
+                .build();
+
+        var reaction = new ReactionMessageBuilder()
+                .key(key).text("👍🏾").build();
+        var info = new ChatMessageInfoBuilder()
+                .key(reactionKey)
+                .message(LinkedMessageContainer.of(reaction))
+                .build();
+        var bot = new ShoppingBot(repo);
+
+        bot.onShoppingBotMessage(client, info);
+
+        Mockito.verify(repo).setStatus(ItemStatus.PURCHASED, "test-message-key");
+    }
+
+    @Test
+    public void replaceOrRemoveEmojiInProgress () {
+        ShoppingBotRepository repo = Mockito.mock(ShoppingBotRepository.class);
+        LinkedWhatsAppClient client = Mockito.mock(LinkedWhatsAppClient.class);
+
+        var key = new MessageKeyBuilder()
+                .id("test-message-key").build();
+
+        var reactionKey = new MessageKeyBuilder()
+                .parentJid(Jid.of("120363415109588611@g.us")).fromMe(false)
+                .build();
+
+        var reaction = new ReactionMessageBuilder()
+                .key(key).text("").build();
+        var anotherReaction = new ReactionMessageBuilder()
+                .key(key).text("❤\uFE0F").build();
+
+        var info = new ChatMessageInfoBuilder()
+                .key(reactionKey)
+                .message(LinkedMessageContainer.of(reaction))
+                .build();
+        var infoWithAnotherReaction = new ChatMessageInfoBuilder()
+                .key(reactionKey)
+                .message(LinkedMessageContainer.of(anotherReaction))
+                .build();
+
+        var bot = new ShoppingBot(repo);
+
+        bot.onShoppingBotMessage(client, info);
+        bot.onShoppingBotMessage(client, infoWithAnotherReaction);
+        Mockito.verify(repo, Mockito.times(2)).setStatus(ItemStatus.IN_PROGRESS, "test-message-key");
+    }
 }
