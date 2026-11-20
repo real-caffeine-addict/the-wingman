@@ -54,7 +54,7 @@ public class ShoppingBot {
         }
 
         if (emoji.startsWith("\uD83D\uDC4D")) {
-            persistence.setStatus(ItemStatus.PURCHASED, messageId);
+            persistence.setStatus(ItemStatus.COLLECTED, messageId);
         } else {
             persistence.setStatus(ItemStatus.IN_PROGRESS, messageId);
         }

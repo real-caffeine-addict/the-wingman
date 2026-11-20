@@ -164,7 +164,7 @@ public class ShoppingBotTest {
 
         bot.onShoppingBotMessage(client, info);
 
-        Mockito.verify(repo).setStatus(ItemStatus.PURCHASED, "test-message-key");
+        Mockito.verify(repo).setStatus(ItemStatus.COLLECTED, "test-message-key");
     }
 
     @Test
@@ -189,7 +189,7 @@ public class ShoppingBotTest {
 
         bot.onShoppingBotMessage(client, info);
 
-        Mockito.verify(repo).setStatus(ItemStatus.PURCHASED, "test-message-key");
+        Mockito.verify(repo).setStatus(ItemStatus.COLLECTED, "test-message-key");
     }
 
     @Test

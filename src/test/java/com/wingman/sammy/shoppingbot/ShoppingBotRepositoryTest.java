@@ -39,7 +39,7 @@ public class ShoppingBotRepositoryTest {
 
     @Test
     public void ignorePurchasedWhileInserting () {
-        jdbcTemplate.update("INSERT INTO shopping_items (description, status) values ('חלב','PURCHASED')");
+        jdbcTemplate.update("INSERT INTO shopping_items (description, status) values ('חלב','COLLECTED')");
 
         repo.addItems(Set.of("חלב"));
         List<String> result = repo.readShoppingList();
@@ -48,7 +48,7 @@ public class ShoppingBotRepositoryTest {
 
         assertEquals(List.of("חלב"), result);
         assertEquals(2, dbResult.size());
-        assertTrue(dbResult.contains("PENDING") && dbResult.contains("PURCHASED"));
+        assertTrue(dbResult.contains("PENDING") && dbResult.contains("COLLECTED"));
     }
 
     @Test
@@ -68,7 +68,7 @@ public class ShoppingBotRepositoryTest {
     @Test
     public void attachMessageId () {
         repo.addItems(Set.of("eggs", "milk"));
-        jdbcTemplate.update("INSERT INTO shopping_items (description, status) values ('milk','PURCHASED')");
+        jdbcTemplate.update("INSERT INTO shopping_items (description, status) values ('milk','COLLECTED')");
 
         repo.attachMessageId("test-id", "milk");
         List<String> milkId = jdbcTemplate.queryForList(
@@ -76,7 +76,7 @@ public class ShoppingBotRepositoryTest {
                 String.class
         );
         String milkPurchasedId = jdbcTemplate.queryForObject(
-                "SELECT message_id FROM shopping_items WHERE description = 'milk' AND status = 'PURCHASED'",
+                "SELECT message_id FROM shopping_items WHERE description = 'milk' AND status = 'COLLECTED'",
                 String.class
         );
         String milkInProgressId = jdbcTemplate.queryForObject(
@@ -88,7 +88,7 @@ public class ShoppingBotRepositoryTest {
                 ,int.class
         );
         Integer purchasedCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM shopping_items WHERE status = 'PURCHASED'",
+                "SELECT COUNT(*) FROM shopping_items WHERE status = 'COLLECTED'",
                 int.class
         );
         Integer hasIdCount = jdbcTemplate.queryForObject(
@@ -110,10 +110,10 @@ public class ShoppingBotRepositoryTest {
         repo.attachMessageId("beef-id", "beef");
         repo.attachMessageId("rice-id", "rice");
 
-        repo.setStatus(ItemStatus.PURCHASED, "beef-id");
+        repo.setStatus(ItemStatus.COLLECTED, "beef-id");
         String beefStatus = jdbcTemplate.queryForObject("SELECT status FROM shopping_items WHERE message_id = 'beef-id'", String.class);
         String riceStatus = jdbcTemplate.queryForObject("SELECT status FROM shopping_items WHERE message_id = 'rice-id'", String.class);
-        assertEquals("PURCHASED", beefStatus);
+        assertEquals("COLLECTED", beefStatus);
         assertEquals("IN_PROGRESS", riceStatus);
 
         repo.setStatus(ItemStatus.IN_PROGRESS, "beef-id");
