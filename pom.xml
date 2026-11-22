@@ -36,9 +36,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.github.Auties00.Cobalt</groupId>
+			<groupId>com.github.real-caffeine-addict.Cobalt</groupId>
 			<artifactId>cobalt-lib</artifactId>
-			<version>cb9fbf172507626948fbc3611d0a6fb00bb3a0f1</version>
+			<version>63ef7292159a7a6686f4769e125a8f7793711360</version>
 		</dependency>
 	</dependencies>
 
