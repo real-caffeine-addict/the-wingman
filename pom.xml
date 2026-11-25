@@ -62,6 +62,13 @@
 			<artifactId>cobalt-lib</artifactId>
 			<version>63ef7292159a7a6686f4769e125a8f7793711360</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-core</artifactId>
+			<version>4.2.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

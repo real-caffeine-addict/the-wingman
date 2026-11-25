@@ -12,7 +12,9 @@ import com.github.auties00.cobalt.wire.linked.message.context.ContextInfoBuilder
 import com.github.auties00.cobalt.wire.linked.message.text.ExtendedTextMessage;
 import com.github.auties00.cobalt.wire.linked.message.text.ExtendedTextMessageBuilder;
 import com.github.auties00.cobalt.wire.linked.message.text.ReactionMessageBuilder;
+import com.wingman.sammy.MediaProperties;
 import com.wingman.sammy.shoppingbot.domain.ItemStatus;
+import com.wingman.sammy.utilities.HashHandler;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -21,13 +23,15 @@ import java.util.Optional;
 import java.util.Set;
 
 public class ShoppingBotTest {
+    private final HashHandler encoder = Mockito.mock(HashHandler.class);
+    private final MediaProperties mediaProperties = Mockito.mock(MediaProperties.class);
 
     @Test
     public void writeShoppingListHappyPath () {
         String msg = "Lettuce\nעגבניה \n $Gד \n   Lettuce";
         ShoppingBotRepository repo = Mockito.mock(ShoppingBotRepository.class);
         LinkedWhatsAppClient client = Mockito.mock(LinkedWhatsAppClient.class);
-        ShoppingBot bot = new ShoppingBot(repo);
+        ShoppingBot bot = new ShoppingBot(repo, encoder, mediaProperties);
         var key = new MessageKeyBuilder()
                 .parentJid(Jid.of("120363415109588611@g.us"))
                 .fromMe(false)
@@ -78,7 +82,7 @@ public class ShoppingBotTest {
         Mockito.when(account.jid()).thenReturn(Optional.of(sammyJid));
         Mockito.when(account.lid()).thenReturn(Optional.empty());
 
-        ShoppingBot bot = new ShoppingBot(repo);
+        ShoppingBot bot = new ShoppingBot(repo, encoder, mediaProperties);
 
         ChatMessageInfo info = new ChatMessageInfoBuilder()
                 .key(key)
@@ -104,7 +108,7 @@ public class ShoppingBotTest {
     void ignoresOwnMessages() {
         var repo = Mockito.mock(ShoppingBotRepository.class);
         var client = Mockito.mock(LinkedWhatsAppClient.class);
-        var bot = new ShoppingBot(repo);
+        var bot = new ShoppingBot(repo, encoder, mediaProperties);
 
         var key = new MessageKeyBuilder()
                 .parentJid(Jid.of("120363415109588611@g.us"))
@@ -125,7 +129,7 @@ public class ShoppingBotTest {
     void ignoresMessagesFromOtherChats() {
         var repo = Mockito.mock(ShoppingBotRepository.class);
         var client = Mockito.mock(LinkedWhatsAppClient.class);
-        var bot = new ShoppingBot(repo);
+        var bot = new ShoppingBot(repo, encoder, mediaProperties);
 
         var key = new MessageKeyBuilder()
                 .parentJid(Jid.of("120363000000000000@g.us"))
@@ -160,7 +164,7 @@ public class ShoppingBotTest {
                 .key(reactionKey)
                 .message(LinkedMessageContainer.of(reaction))
                 .build();
-        var bot = new ShoppingBot(repo);
+        var bot = new ShoppingBot(repo, encoder, mediaProperties);
 
         bot.onShoppingBotMessage(client, info);
 
@@ -185,7 +189,7 @@ public class ShoppingBotTest {
                 .key(reactionKey)
                 .message(LinkedMessageContainer.of(reaction))
                 .build();
-        var bot = new ShoppingBot(repo);
+        var bot = new ShoppingBot(repo, encoder, mediaProperties);
 
         bot.onShoppingBotMessage(client, info);
 
@@ -218,10 +222,12 @@ public class ShoppingBotTest {
                 .message(LinkedMessageContainer.of(anotherReaction))
                 .build();
 
-        var bot = new ShoppingBot(repo);
+        var bot = new ShoppingBot(repo, encoder, mediaProperties);
 
         bot.onShoppingBotMessage(client, info);
         bot.onShoppingBotMessage(client, infoWithAnotherReaction);
         Mockito.verify(repo, Mockito.times(2)).setStatus(ItemStatus.IN_PROGRESS, "test-message-key");
     }
+
+
 }
